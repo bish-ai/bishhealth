@@ -1,0 +1,7 @@
+*.dart
+.git
+.gitignore
+node_modules
+.env.example
+test/
+docs/

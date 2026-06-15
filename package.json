@@ -1,0 +1,11 @@
+{
+  "name": "bishhealth",
+  "version": "1.0.0",
+  "description": "Flutter health app with AI/ML integration",
+  "scripts": {
+    "build": "bash build.sh",
+    "dev": "flutter run -d web"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
