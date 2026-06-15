@@ -1,0 +1,94 @@
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+flutter_*.png
+linear_gradient_*.png
+
+# Android
+android/local.properties
+android/gradle.properties
+android/.gradle/
+android/captures/
+android/gradlew.bat
+android/gradlew
+
+# iOS
+ios/.symlinks/
+ios/.generated.xcconfig
+ios/Flutter/.last_build_id
+ios/Flutter/.dartignore
+ios/Flutter/Flutter.podspec
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter-Debug.xcconfig
+ios/Flutter/Flutter-Release.xcconfig
+ios/Flutter/Generated.xcconfig
+ios/Flutter/ephemeral/
+ios/Flutter/app.flx
+ios/Flutter/app.zip
+ios/Flutter/flutter_assets/
+ios/Flutter/flutter_export_environment.sh
+ios/ServiceDefinitions.json
+ios/Runner/GeneratedPluginRegistrant.*
+ios/Pods/
+ios/Podfile.lock
+ios/.idea/
+
+# macOS
+macos/Flutter/Flutter-Debug.xcconfig
+macos/Flutter/Flutter-Release.xcconfig
+macos/Flutter/Flutter-General.xcconfig
+macos/Flutter/GeneratedPluginRegistrant.swift
+
+# Windows
+windows/flutter/generated_plugins.cmake
+windows/flutter/generated_plugins.h
+windows/flutter/generated_plugins.cc
+
+# Linux
+linux/flutter/generated_plugins.cmake
+linux/flutter/generated_plugins.h
+linux/flutter/generated_plugins.cc
+
+# Web
+lib/generated_plugin_registrant.dart
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
+*.swp
+*.swo
+*~
+.DS_Store
+*.iml
+
+# Project
+*.log
+*.jks
+*.keystore
+
+# Environment
+.env
+.env.local
+
+# Generated files
+*.g.dart
+*.freezed.dart
+*.config.dart
+
+# Dependencies
+pubspec.lock
+
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv
