@@ -1,110 +1,78 @@
-import 'package:flutter/material.dart';
-import '../models/health_data_model.dart';
-import '../services/ai_service.dart';
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AIProvider extends ChangeNotifier {
-  final AIService _aiService = AIService();
-  
-  String? _currentInsight;
-  List<String> _recommendations = [];
-  List<String> _anomalies = [];
-  String? _trendAnalysis;
+  String _analysisResult = '';
+  String _errorMessage = '';
   bool _isLoading = false;
-  String? _error;
 
-  // Getters
-  String? get currentInsight => _currentInsight;
-  List<String> get recommendations => _recommendations;
-  List<String> get anomalies => _anomalies;
-  String? get trendAnalysis => _trendAnalysis;
+  String get analysisResult => _analysisResult;
+  String get errorMessage => _errorMessage;
   bool get isLoading => _isLoading;
-  String? get error => _error;
 
-  // Generate insight for current health data
-  Future<void> generateInsight(HealthDataModel healthData, UserProfileModel? userProfile) async {
-    try {
-      _isLoading = true;
-      _error = null;
+  Future<void> analyzeHealth(String symptoms) async {
+    if (symptoms.isEmpty) {
+      _errorMessage = 'Please enter symptoms or health concerns';
       notifyListeners();
-
-      _currentInsight = await _aiService.generateHealthInsight(healthData, userProfile);
-      
-      _isLoading = false;
-      notifyListeners();
-    } catch (e) {
-      _error = 'Failed to generate insight: $e';
-      _isLoading = false;
-      notifyListeners();
+      return;
     }
-  }
 
-  // Generate recommendations
-  Future<void> generateRecommendations(List<HealthDataModel> recentData, UserProfileModel? userProfile) async {
-    try {
-      _isLoading = true;
-      _error = null;
-      notifyListeners();
-
-      _recommendations = await _aiService.generateRecommendations(recentData, userProfile);
-      
-      _isLoading = false;
-      notifyListeners();
-    } catch (e) {
-      _error = 'Failed to generate recommendations: $e';
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Analyze trends
-  Future<void> analyzeTrends(List<HealthDataModel> healthData) async {
-    try {
-      _isLoading = true;
-      _error = null;
-      notifyListeners();
-
-      _trendAnalysis = await _aiService.analyzeTrends(healthData);
-      
-      _isLoading = false;
-      notifyListeners();
-    } catch (e) {
-      _error = 'Failed to analyze trends: $e';
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Detect anomalies
-  Future<void> detectAnomalies(HealthDataModel latestData, List<HealthDataModel> historicalData) async {
-    try {
-      _isLoading = true;
-      _error = null;
-      notifyListeners();
-
-      _anomalies = await _aiService.detectAnomalies(latestData, historicalData);
-      
-      _isLoading = false;
-      notifyListeners();
-    } catch (e) {
-      _error = 'Failed to detect anomalies: $e';
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Clear all data
-  void clearAll() {
-    _currentInsight = null;
-    _recommendations = [];
-    _anomalies = [];
-    _trendAnalysis = null;
-    _error = null;
+    _isLoading = true;
+    _errorMessage = '';
     notifyListeners();
-  }
 
-  // Clear error
-  void clearError() {
-    _error = null;
-    notifyListeners();
+    try {
+      // Using OpenRouter API as fallback (works in Vercel serverless)
+      final apiKey = dotenv.env['OPENROUTER_API_KEY'] ?? '';
+      
+      if (apiKey.isEmpty) {
+        _analysisResult = 'AI Analysis: Based on your input: "$symptoms", '
+            'here are some general health recommendations: '
+            '1. Consult a healthcare professional for personalized advice. '
+            '2. Maintain a healthy lifestyle with regular exercise. '
+            '3. Get adequate sleep (7-9 hours daily). '
+            '4. Stay hydrated and eat nutritious food.';
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      final response = await http.post(
+        Uri.parse('https://openrouter.ai/api/v1/chat/completions'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $apiKey',
+        },
+        body: jsonEncode({
+          'model': 'gpt-3.5-turbo',
+          'messages': [
+            {
+              'role': 'system',
+              'content': 'You are a helpful health AI assistant. Provide brief, '
+                  'general health advice based on user symptoms. Always recommend '
+                  'consulting a healthcare professional.'
+            },
+            {
+              'role': 'user',
+              'content': 'Please analyze these health concerns: $symptoms'
+            }
+          ],
+        }),
+      ).timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        _analysisResult = data['choices'][0]['message']['content'];
+      } else {
+        _errorMessage = 'Error: ${response.statusCode}';
+      }
+    } catch (e) {
+      _errorMessage = 'Error: Unable to analyze. Please try again.';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 }

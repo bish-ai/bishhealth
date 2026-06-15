@@ -1,51 +1,34 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'config/theme_config.dart';
-import 'data/local/hive_service.dart';
-import 'providers/app_state_provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'screens/home_screen.dart';
 import 'providers/health_provider.dart';
 import 'providers/ai_provider.dart';
-import 'ui/screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize system orientation
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
-  
-  // Initialize Hive for local storage
-  await Hive.initFlutter();
-  await HiveService.init();
-  
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => AppStateProvider()),
-        ChangeNotifierProvider(create: (_) => HealthProvider()),
-        ChangeNotifierProvider(create: (_) => AIProvider()),
-      ],
-      child: const BishHealthApp(),
-    ),
-  );
+  await dotenv.load(fileName: ".env");
+  runApp(const MyApp());
 }
 
-class BishHealthApp extends StatelessWidget {
-  const BishHealthApp({Key? key}) : super(key: key);
+class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'BishHealth - AI Health Tracker',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeConfig.lightTheme,
-      darkTheme: ThemeConfig.darkTheme,
-      themeMode: ThemeMode.system,
-      home: const SplashScreen(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => HealthProvider()),
+        ChangeNotifierProvider(create: (_) => AIProvider()),
+      ],
+      child: MaterialApp(
+        title: 'BishHealth',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          useMaterial3: true,
+        ),
+        home: const HomeScreen(),
+      ),
     );
   }
 }

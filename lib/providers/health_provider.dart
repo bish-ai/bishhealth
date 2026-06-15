@@ -1,210 +1,43 @@
-import 'package:flutter/material.dart';
-import '../models/health_data_model.dart';
-import '../data/local/hive_service.dart';
-import '../services/health_service.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:math';
 
 class HealthProvider extends ChangeNotifier {
-  final HealthService _healthService = HealthService();
-  
-  List<HealthDataModel> _healthDataList = [];
-  UserProfileModel? _userProfile;
-  bool _isLoading = false;
-  String? _error;
+  double _heartRate = 72.0;
+  int _steps = 5000;
+  double _calories = 250.0;
+  double _sleep = 7.5;
+  List<Map<String, dynamic>> _healthHistory = [];
 
-  // Getters
-  List<HealthDataModel> get healthDataList => _healthDataList;
-  UserProfileModel? get userProfile => _userProfile;
-  bool get isLoading => _isLoading;
-  String? get error => _error;
+  double get heartRate => _heartRate;
+  int get steps => _steps;
+  double get calories => _calories;
+  double get sleep => _sleep;
+  List<Map<String, dynamic>> get healthHistory => _healthHistory;
 
-  HealthProvider() {
-    _initialize();
-  }
-
-  // Initialize provider
-  Future<void> _initialize() async {
-    _loadUserProfile();
-    _loadHealthData();
-  }
-
-  // Load user profile
-  void _loadUserProfile() {
-    _userProfile = HiveService.getUserProfile();
+  Future<void> loadHealthData() async {
+    // Simulate API call to fetch health data
+    await Future.delayed(const Duration(seconds: 1));
+    _generateRandomHealthData();
     notifyListeners();
   }
 
-  // Save user profile
-  Future<void> saveUserProfile(UserProfileModel profile) async {
-    try {
-      _isLoading = true;
-      _error = null;
-      notifyListeners();
-
-      await HiveService.saveUserProfile(profile);
-      _userProfile = profile;
-      
-      _isLoading = false;
-      notifyListeners();
-    } catch (e) {
-      _error = 'Failed to save profile: $e';
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Load health data
-  void _loadHealthData() {
-    _healthDataList = HiveService.getAllHealthData();
-    _healthDataList.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+  void addHealthData() {
+    _generateRandomHealthData();
+    _healthHistory.add({
+      'heartRate': _heartRate,
+      'steps': _steps,
+      'calories': _calories,
+      'sleep': _sleep,
+      'timestamp': DateTime.now(),
+    });
     notifyListeners();
   }
 
-  // Add health data
-  Future<void> addHealthData(HealthDataModel data) async {
-    try {
-      _isLoading = true;
-      _error = null;
-      notifyListeners();
-
-      await HiveService.saveHealthData(data);
-      _loadHealthData();
-      
-      _isLoading = false;
-      notifyListeners();
-    } catch (e) {
-      _error = 'Failed to add health data: $e';
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Update health data
-  Future<void> updateHealthData(HealthDataModel data) async {
-    try {
-      _isLoading = true;
-      _error = null;
-      notifyListeners();
-
-      await HiveService.saveHealthData(data);
-      _loadHealthData();
-      
-      _isLoading = false;
-      notifyListeners();
-    } catch (e) {
-      _error = 'Failed to update health data: $e';
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Delete health data
-  Future<void> deleteHealthData(String id) async {
-    try {
-      _isLoading = true;
-      _error = null;
-      notifyListeners();
-
-      await HiveService.deleteHealthData(id);
-      _loadHealthData();
-      
-      _isLoading = false;
-      notifyListeners();
-    } catch (e) {
-      _error = 'Failed to delete health data: $e';
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Get health data by date range
-  List<HealthDataModel> getHealthDataByDateRange(DateTime start, DateTime end) {
-    return HiveService.getHealthDataByDateRange(start, end)
-        ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
-  }
-
-  // Sync health data from system
-  Future<void> syncHealthData() async {
-    try {
-      _isLoading = true;
-      _error = null;
-      notifyListeners();
-
-      await _healthService.syncHealthData();
-      _loadHealthData();
-      
-      _isLoading = false;
-      notifyListeners();
-    } catch (e) {
-      _error = 'Failed to sync health data: $e';
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  // Request permissions
-  Future<bool> requestHealthPermissions() async {
-    try {
-      return await _healthService.requestHealthPermissions();
-    } catch (e) {
-      _error = 'Failed to request permissions: $e';
-      notifyListeners();
-      return false;
-    }
-  }
-
-  // Get today's summary
-  HealthDataModel? getTodaySummary() {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final tomorrow = today.add(Duration(days: 1));
-
-    try {
-      return _healthDataList.firstWhere(
-        (data) => data.timestamp.isAfter(today) && data.timestamp.isBefore(tomorrow),
-        orElse: () => HealthDataModel(
-          id: 'empty',
-          timestamp: now,
-        ),
-      );
-    } catch (e) {
-      return null;
-    }
-  }
-
-  // Get weekly stats
-  Map<String, double> getWeeklyStats() {
-    final now = DateTime.now();
-    final weekAgo = now.subtract(Duration(days: 7));
-    
-    final weekData = getHealthDataByDateRange(weekAgo, now);
-    
-    double totalSteps = 0;
-    double totalCalories = 0;
-    double avgHeartRate = 0;
-    double totalSleep = 0;
-    int heartRateCount = 0;
-
-    for (var data in weekData) {
-      if (data.stepsCount != null) totalSteps += data.stepsCount!;
-      if (data.calories != null) totalCalories += data.calories!;
-      if (data.heartRate != null) {
-        avgHeartRate += data.heartRate!;
-        heartRateCount++;
-      }
-      if (data.sleepDuration != null) totalSleep += data.sleepDuration!;
-    }
-
-    return {
-      'total_steps': totalSteps,
-      'total_calories': totalCalories,
-      'avg_heart_rate': heartRateCount > 0 ? avgHeartRate / heartRateCount : 0,
-      'total_sleep': totalSleep,
-    };
-  }
-
-  // Clear all errors
-  void clearError() {
-    _error = null;
-    notifyListeners();
+  void _generateRandomHealthData() {
+    final random = Random();
+    _heartRate = 60 + random.nextDouble() * 40; // 60-100 bpm
+    _steps = 3000 + random.nextInt(15000);
+    _calories = 200 + random.nextDouble() * 600;
+    _sleep = 5 + random.nextDouble() * 4;
   }
 }
